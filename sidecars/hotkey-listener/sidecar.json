@@ -1,0 +1,7 @@
+{
+  "display_name": "PromptPatcher Alt+V Listener",
+  "description": "Background Windows hotkey daemon listening for Alt+V to perform instant AI text correction.",
+  "command": "python",
+  "args": ["listener.py"],
+  "restart_policy": "always"
+}

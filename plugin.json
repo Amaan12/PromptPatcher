@@ -1,0 +1,8 @@
+{
+  "name": "prompt-patcher",
+  "description": "Global Alt+V text correction sidecar powered by Gemini Flash.",
+  "suggestedPrompts": [
+    "Fix typos and errors in my text without changing my tone",
+    "Check this prompt for syntax errors and spelling"
+  ]
+}
