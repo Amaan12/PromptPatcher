@@ -7,6 +7,7 @@ import subprocess
 import sys
 import threading
 import time
+import urllib.request
 
 # Win32 API Definitions
 user32 = ctypes.windll.user32
@@ -39,6 +40,7 @@ kernel32.GlobalUnlock.restype = wintypes.BOOL
 CF_UNICODETEXT = 13
 GMEM_MOVEABLE = 0x0002
 MOD_ALT = 0x0001
+MOD_CONTROL = 0x0002
 MOD_NOREPEAT = 0x4000
 VK_V = 0x56
 VK_CONTROL = 0x11
@@ -127,32 +129,41 @@ def press_combination(*keys):
 
 
 def correct_text_with_agent(text_to_fix: str) -> str:
-    """Invokes the headless Agent API to fix text errors while strictly preserving voice/tone."""
+    """Invokes Antigravity agentapi to fix text errors preserving voice/tone."""
     prompt = (
-        "Fix all typos, misspellings, grammar, and errors in the text below.\n"
+        "Fix all typos, misspellings, grammar, and syntax errors in the text below.\n"
         "STRICT RULES:\n"
         "1. CAPITALIZATION & PUNCTUATION:\n"
         "   - Capitalize the first letter of each sentence and standalone 'I'.\n"
-        "   - Capitalize proper nouns, brands, and product names (e.g., Google Chrome, Windows, Python).\n"
+        "   - Capitalize proper nouns, brands, product names, locations, and days/months (e.g., Google Chrome, Windows, Python, Elm Blvd, Sarah, Friday).\n"
         "   - Ensure proper terminal punctuation (period/full stop, '?', '!') at the end of sentences.\n"
         "   - Fix punctuation spacing: remove space before punctuation ('word ,' -> 'word,'), ensure space after ('word,word' -> 'word, word').\n"
         "   - Clamp runaway punctuation ('....' -> '...', '????' -> '?', '!!!!' -> '!').\n"
         "   - Auto-close any dangling or unclosed parentheses, brackets, or quotes.\n"
         "   - STRICTLY AVOID the em dash ('—' or '--'); it is an AI giveaway. Use commas, colons, or standard punctuation instead.\n"
-        "2. WORDS, CONTRACTIONS & COMMON SLIPS:\n"
+        "2. COMPREHENSIVE GRAMMAR, TENSE & SYNTAX:\n"
+        "   - SUBJECT-VERB AGREEMENT & TENSE CONSISTENCY: Align verbs with their subjects and maintain consistent narrative tense (e.g., 'we tries' -> 'we tried', 'we end up' -> 'we ended up', 'securty take away' -> 'security took away', 'it were' -> 'it was', 'which make no sens' -> 'which makes/made no sense').\n"
+        "   - IRREGULAR VERBS & PARTICIPLES: Correct non-standard or missing auxiliary verb forms (e.g., 'we ringed him' -> 'we rang him', 'termites eaten' -> 'termites had eaten' / 'termites ate', 'let you buyed' -> 'let you buy', 'can finded' -> 'could find').\n"
+        "   - DOUBLE NEGATIVES: Resolve ungrammatical double negatives cleanly (e.g., 'no one hasn't come' -> 'no one has come', 'nobody never understood' -> 'nobody ever understood').\n"
+        "   - CORRELATIVE CONJUNCTIONS: Fix paired conjunctions (e.g., 'neither X or Y' -> 'neither X nor Y', 'either X nor Y' -> 'either X or Y').\n"
+        "   - GERUNDS VS. INFINITIVES & ADVERBS: Fix unnatural gerund/infinitive misuse and adjective/adverb confusion (e.g., 'forgot putting sugar' -> 'forgot to put sugar', 'cry very loud' -> 'cry very loudly').\n"
+        "   - MISSING NECESSARY WORDS & PREPOSITIONS: Supply missing copulas, auxiliary verbs, or necessary articles (e.g., 'who suposed to' -> 'who was supposed to', 'give us key' -> 'give us the key', 'every bare skin' -> 'every patch of bare skin').\n"
+        "   - CONTEXTUAL IDIOMATIC USAGE: Fix distorted idioms or malapropisms (e.g., glass 'scratched into pieces' -> 'shattered into pieces').\n"
+        "3. WORDS, CONTRACTIONS & COMMON SLIPS:\n"
         "   - Remove accidental duplicate repeated words (e.g., 'that that' -> 'that', 'to to' -> 'to').\n"
-        "   - Fix missing apostrophe homographs based on context (e.g., 'ill do it' -> 'I'll do it', 'well see' -> 'we'll see', 'wont' -> 'won't', 'cant' -> 'can't').\n"
+        "   - Fix missing apostrophe homographs and homophones based on context (e.g., 'ill' -> 'I'll', 'well' -> 'we'll', 'wont' -> 'won't', 'cant' -> 'can't', 'its' vs 'it's', 'their' vs 'they're' vs 'there', 'your' vs 'you're', 'then' vs 'than', 'untill mourning' -> 'until morning').\n"
         "   - Fix phonetic grammar slips (e.g., 'could of' -> 'could have', 'should of' -> 'should have', 'suppose to' -> 'supposed to', 'use to' -> 'used to').\n"
         "   - Expand casual phonetic text slang into proper words (e.g., 'plz' -> 'please', 'thx' -> 'thanks', 'u' -> 'you', 'r' -> 'are', 'gonna' -> 'going to').\n"
-        "   - Hyphenate compound modifiers before nouns (e.g., 'real time' -> 'real-time', 'low latency' -> 'low-latency') and format units (e.g., '10gb' -> '10 GB').\n"
+        "   - Hyphenate compound modifiers before nouns (e.g., 'real time' -> 'real-time', 'low latency' -> 'low-latency') and format units (e.g., '10gb' -> '10 GB', '3 ounces' -> '3 oz').\n"
         "   - PRESERVE common acronyms and technical terms (e.g., 'idk', 'tbh', 'afaik', 'api', 's3', 'pr', 'repo', 'json', 'cli').\n"
-        "   - Apply fixes ONLY at the word level. Strictly DO NOT rewrite, rephrase, embellish, or change sentence structure.\n"
-        "3. SPEED & OUTPUT:\n"
+        "   - DO NOT rewrite, rephrase unnecessarily, embellish, or change conversational voice.\n"
+        "4. SPEED & OUTPUT:\n"
         "   - DO NOT call any tools. Do NOT deliberate or overthink.\n"
         "   - Output ONLY the raw corrected text with NO conversational filler and NO markdown blocks.\n\n"
         "Text to fix:\n"
         f"{text_to_fix}"
     )
+
 
     cmd = [
         AGENTAPI_EXE,
@@ -164,7 +175,7 @@ def correct_text_with_agent(text_to_fix: str) -> str:
     ]
 
     try:
-        # Run hidden with CREATE_NO_WINDOW so it never steals focus from the target window
+        # Run with CREATE_NO_WINDOW so it never steals focus from the active app
         res = subprocess.run(
             cmd,
             capture_output=True,
@@ -205,22 +216,23 @@ def correct_text_with_agent(text_to_fix: str) -> str:
 
 
 def on_hotkey_pressed():
-    """Handler executed when Alt + V is detected."""
-    print("[Alt+V Triggered] Processing active text...", flush=True)
+    """Handler executed when Ctrl + Alt + V is detected."""
+    print("[Ctrl+Alt+V Triggered] Processing active text...", flush=True)
 
     # 1. Capture the target window currently in the foreground
     target_hwnd = user32.GetForegroundWindow()
 
-    # 2. Release Alt and V physically so they don't interfere with Ctrl+C/V
+    # 2. Release Ctrl, Alt, and V physically so they don't interfere with Ctrl+C/V
+    send_key(VK_CONTROL, up=True)
     send_key(VK_MENU, up=True)
     send_key(VK_V, up=True)
-    time.sleep(0.05)
+    time.sleep(0.06)
 
     # 3. Backup current clipboard
     old_clipboard = get_clipboard()
 
     # 4. Try copying active selection first
-    set_clipboard("")
+    set_clipboard("")  # Clear clipboard so we can detect if Ctrl+C writes anything
     time.sleep(0.02)
     press_combination(VK_CONTROL, VK_C)
     time.sleep(0.08)
@@ -242,7 +254,7 @@ def on_hotkey_pressed():
 
     print(f"[Alt+V] Input captured ({len(selected_text)} chars): {selected_text[:60]!r}...", flush=True)
 
-    # 6. Send to headless agent
+    # 6. Send to Antigravity Flash Lite
     start_time = time.time()
     corrected = correct_text_with_agent(selected_text)
     duration = time.time() - start_time
@@ -254,7 +266,7 @@ def on_hotkey_pressed():
 
     print(f"[Alt+V] Corrected in {duration:.2f}s! Result: {corrected!r}", flush=True)
 
-    # 7. Ensure target window is in foreground before pasting
+    # 7. Ensure target window is foreground before pasting
     if target_hwnd:
         user32.SetForegroundWindow(target_hwnd)
         time.sleep(0.05)
@@ -270,29 +282,83 @@ def on_hotkey_pressed():
     print("[Alt+V] Pasted cleanly back to active window!", flush=True)
 
 
+def monitor_parent_and_antigravity():
+    """Watches the parent process and Antigravity language server.
+    Exits cleanly if Antigravity or the parent process terminates.
+    """
+    parent_pid = os.getppid()
+    SYNCHRONIZE = 0x00100000
+    h_parent = kernel32.OpenProcess(SYNCHRONIZE, False, parent_pid)
+
+    ls_addr = os.environ.get("ANTIGRAVITY_LS_ADDRESS", "")
+    fail_count = 0
+
+    while True:
+        time.sleep(2.0)
+
+        # 1. Check parent process alive
+        if h_parent:
+            # WaitForSingleObject with 0ms timeout: WAIT_OBJECT_0 (0) means terminated
+            wait_res = kernel32.WaitForSingleObject(h_parent, 0)
+            if wait_res == 0:
+                print("[Alt+V Daemon] Parent process terminated. Shutting down.", flush=True)
+                os._exit(0)
+
+        # 2. Check Antigravity language server heartbeat if address is known
+        if ls_addr:
+            try:
+                req = urllib.request.Request(f"http://{ls_addr}/healthz")
+                with urllib.request.urlopen(req, timeout=1.5) as resp:
+                    if resp.status == 200:
+                        fail_count = 0
+            except Exception:
+                fail_count += 1
+                if fail_count >= 3:
+                    print("[Alt+V Daemon] Antigravity language server disconnected. Shutting down.", flush=True)
+                    os._exit(0)
+
+
 def main():
     print("=" * 60)
-    print("  PromptPatcher Alt+V Text Correction Daemon Active")
+    print("  Antigravity Text Correction Daemon Active")
     print(f"  AgentAPI Binary: {AGENTAPI_EXE}")
     print(f"  Brain Directory: {BRAIN_DIR}")
-    print("  Press Alt + V anywhere in Windows to fix typos & errors.")
+    print("  Press Ctrl + Alt + V anywhere in Windows to fix typos & errors.")
     print("=" * 60, flush=True)
 
-    if not user32.RegisterHotKey(None, HOTKEY_ID, MOD_ALT | MOD_NOREPEAT, VK_V):
-        print(f"[Error] Failed to register Alt + V hotkey (Error code: {kernel32.GetLastError()})", file=sys.stderr)
+    # Start parent & Antigravity lifecycle monitor thread
+    monitor_thread = threading.Thread(target=monitor_parent_and_antigravity, daemon=True)
+    monitor_thread.start()
+
+    # Retry registering hotkey if previous instance is still releasing it
+    registered = False
+    for attempt in range(15):
+        if user32.RegisterHotKey(None, HOTKEY_ID, MOD_CONTROL | MOD_ALT | MOD_NOREPEAT, VK_V):
+            registered = True
+            break
+        time.sleep(0.5)
+
+    if not registered:
+        err = kernel32.GetLastError()
+        print(f"[Error] Failed to register Ctrl + Alt + V hotkey (Error code: {err})", file=sys.stderr, flush=True)
         sys.exit(1)
+
+    print("[Text Fixer Daemon] Hotkey Ctrl + Alt + V registered successfully.", flush=True)
+
 
     try:
         msg = wintypes.MSG()
         while user32.GetMessageW(ctypes.byref(msg), None, 0, 0) != 0:
             if msg.message == WM_HOTKEY and msg.wParam == HOTKEY_ID:
+                # Handle in a background thread so the Windows message loop doesn't stall
                 threading.Thread(target=on_hotkey_pressed, daemon=True).start()
             user32.TranslateMessage(ctypes.byref(msg))
             user32.DispatchMessageW(ctypes.byref(msg))
     finally:
         user32.UnregisterHotKey(None, HOTKEY_ID)
-        print("[PromptPatcher Daemon Stopped]")
+        print("[Alt+V Daemon Stopped]", flush=True)
 
 
 if __name__ == "__main__":
     main()
+

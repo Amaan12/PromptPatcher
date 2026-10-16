@@ -11,7 +11,7 @@ When typing at 130–150+ WPM, the biggest bottleneck to raw throughput is the *
 
 Traditional tools (like Grammarly) force a slow "hover, click, and review each underlined word" loop that kills momentum. **PromptPatcher** takes the opposite approach:
 * Type at full thought-speed without ever backspacing.
-* Hit a single hotkey (`Alt + V`).
+* Hit a single hotkey (`Ctrl + Alt + V`).
 * The active text field snaps to clean, grammatically sound prose in ~1.5 seconds.
 * **Zero AI sanitization:** It will never "elevate" your words or reword your sentences into generic corporate speak.
 
@@ -22,29 +22,38 @@ Traditional tools (like Grammarly) force a slow "hover, click, and review each u
 Below is the complete, battle-tested prompt directive used by the **`PromptPatcher`** engine:
 
 ```text
-Fix all typos, misspellings, grammar, and errors in the text below.
+Fix all typos, misspellings, grammar, and syntax errors in the text below.
 
 STRICT RULES:
 
 1. CAPITALIZATION & PUNCTUATION:
    - Capitalize the first letter of each sentence and standalone 'I'.
-   - Capitalize proper nouns, brands, and product names (e.g., Google Chrome, Windows, Python, GitHub).
+   - Capitalize proper nouns, brands, product names, locations, and days/months (e.g., Google Chrome, Windows, Python, Elm Blvd, Sarah, Friday).
    - Ensure proper terminal punctuation (period/full stop, '?', '!') at the end of sentences.
    - Fix punctuation spacing: remove space before punctuation ('word ,' -> 'word,'), ensure space after ('word,word' -> 'word, word').
    - Clamp runaway punctuation ('....' -> '...', '????' -> '?', '!!!!' -> '!').
    - Auto-close any dangling or unclosed parentheses, brackets, or quotes.
    - STRICTLY AVOID the em dash ('—' or '--'); it is an AI giveaway. Use commas, colons, or standard punctuation instead.
 
-2. WORDS, CONTRACTIONS & COMMON SLIPS:
+2. COMPREHENSIVE GRAMMAR, TENSE & SYNTAX:
+   - SUBJECT-VERB AGREEMENT & TENSE CONSISTENCY: Align verbs with their subjects and maintain consistent narrative tense (e.g., 'we tries' -> 'we tried', 'we end up' -> 'we ended up', 'securty take away' -> 'security took away', 'it were' -> 'it was', 'which make no sens' -> 'which makes/made no sense').
+   - IRREGULAR VERBS & PARTICIPLES: Correct non-standard or missing auxiliary verb forms (e.g., 'we ringed him' -> 'we rang him', 'termites eaten' -> 'termites had eaten' / 'termites ate', 'let you buyed' -> 'let you buy', 'can finded' -> 'could find').
+   - DOUBLE NEGATIVES: Resolve ungrammatical double negatives cleanly (e.g., 'no one hasn't come' -> 'no one has come', 'nobody never understood' -> 'nobody ever understood').
+   - CORRELATIVE CONJUNCTIONS: Fix paired conjunctions (e.g., 'neither X or Y' -> 'neither X nor Y', 'either X nor Y' -> 'either X or Y').
+   - GERUNDS VS. INFINITIVES & ADVERBS: Fix unnatural gerund/infinitive misuse and adjective/adverb confusion (e.g., 'forgot putting sugar' -> 'forgot to put sugar', 'cry very loud' -> 'cry very loudly').
+   - MISSING NECESSARY WORDS & PREPOSITIONS: Supply missing copulas, auxiliary verbs, or necessary articles (e.g., 'who suposed to' -> 'who was supposed to', 'give us key' -> 'give us the key', 'every bare skin' -> 'every patch of bare skin').
+   - CONTEXTUAL IDIOMATIC USAGE: Fix distorted idioms or malapropisms (e.g., glass 'scratched into pieces' -> 'shattered into pieces').
+
+3. WORDS, CONTRACTIONS & COMMON SLIPS:
    - Remove accidental duplicate repeated words (e.g., 'that that' -> 'that', 'to to' -> 'to').
-   - Fix missing apostrophe homographs based on context (e.g., 'ill do it' -> 'I'll do it', 'well see' -> 'we'll see', 'wont' -> 'won't', 'cant' -> 'can't').
+   - Fix missing apostrophe homographs and homophones based on context (e.g., 'ill' -> 'I'll', 'well' -> 'we'll', 'wont' -> 'won't', 'cant' -> 'can't', 'its' vs 'it's', 'their' vs 'they're' vs 'there', 'your' vs 'you're', 'then' vs 'than', 'untill mourning' -> 'until morning').
    - Fix phonetic grammar slips (e.g., 'could of' -> 'could have', 'should of' -> 'should have', 'suppose to' -> 'supposed to', 'use to' -> 'used to').
    - Expand casual phonetic text slang into proper words (e.g., 'plz' -> 'please', 'thx' -> 'thanks', 'u' -> 'you', 'r' -> 'are', 'gonna' -> 'going to', 'wanna' -> 'want to').
-   - Hyphenate compound modifiers before nouns (e.g., 'real time' -> 'real-time', 'low latency' -> 'low-latency') and format units (e.g., '10gb' -> '10 GB').
+   - Hyphenate compound modifiers before nouns (e.g., 'real time' -> 'real-time', 'low latency' -> 'low-latency') and format units (e.g., '10gb' -> '10 GB', '3 ounces' -> '3 oz').
    - PRESERVE common acronyms and technical terms (e.g., 'idk', 'tbh', 'afaik', 'api', 's3', 'pr', 'repo', 'json', 'cli').
-   - Apply fixes ONLY at the word level. Strictly DO NOT rewrite, rephrase, embellish, or change sentence structure.
+   - DO NOT rewrite, rephrase unnecessarily, embellish, or change conversational voice.
 
-3. SPEED & OUTPUT:
+4. SPEED & OUTPUT:
    - DO NOT call any tools. Do NOT deliberate or overthink.
    - Output ONLY the raw corrected text with NO conversational filler and NO markdown blocks.
 ```
